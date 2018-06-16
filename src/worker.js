@@ -26,6 +26,7 @@ const sampleRateHertz = 16000;
 const countryLanguageCode = {
 	'US': 'en',
 	'CN': 'zh-Hans',
+	'TA': 'ta'
 }
 const interimResult = true;
 
@@ -40,9 +41,9 @@ function translateAudio(input, output) {
 	const outputCountry = countryLanguageCode[output];
 	const request = {
 	  config: {
-		encoding: encoding,
-		sampleRateHertz: sampleRateHertz,
-		languageCode: inputCountry,
+			encoding: encoding,
+			sampleRateHertz: sampleRateHertz,
+			languageCode: inputCountry,
 	  },
 	  interimResults: interimResult,
 	};
@@ -51,24 +52,26 @@ function translateAudio(input, output) {
 	const recognizeStream = client
 	  .streamingRecognize(request)
 	  .on('error', console.error)
-	  .on('data', function(data){
-		var recordedText = data.results[0].alternatives[0].transcript;
-		var confidence = data.results[0].alternatives[0].confidence;
-		if (confidence < 0.9) {
-			return;
-		}
-		detectAndTranslateAsync(recordedText, 
-			inputCountry,
-			outputCountry);
+	  .on('data', function(data) {
+			if (data && data.results.length > 0) {
+				var recordedText = data.results[0].alternatives[0].transcript;
+				var confidence = data.results[0].alternatives[0].confidence;
+				if (confidence < 0.9) {
+					return;
+				}
+				detectAndTranslateAsync(recordedText,
+					inputCountry,
+					outputCountry);
+			}
 	  });
 
 	record
 	  .start({
-		sampleRateHertz: sampleRateHertz,
-		threshold: 0,
-		verbose: false,
-		recordProgram: 'rec', // Try also "arecord" or "sox"
-		silence: '10.0',
+			sampleRateHertz: sampleRateHertz,
+			threshold: 0,
+			verbose: false,
+			recordProgram: 'rec', // Try also "arecord" or "sox"
+			silence: '10.0',
 	  })
 	  .on('error', console.error)
 	  .pipe(recognizeStream);
@@ -79,7 +82,7 @@ function translateAudio(input, output) {
 function inferDetectionResult(detections) {
  	var largestConf = 0;
 	var inferedResult = null;
-	var interedInput = null;
+	var inferedInput = null;
 	detections = Array.isArray(detections) ? detections : [detections];
 	detections.forEach(detection => {
 		var confidence = detection.confidence;
@@ -90,7 +93,7 @@ function inferDetectionResult(detections) {
 			inferedResult = language;
 			inferedInput = input;
 		}
-    });
+	});
 	console.log(processName + 
 		' Detected conf: ' + largestConf + 
 		', input ' + inferedInput + 
@@ -98,26 +101,26 @@ function inferDetectionResult(detections) {
 	return [inferedResult, inferedInput];
 }
 
-function detectAndTranslateAsync(text, inputC, outputC) {
+function detectAndTranslateAsync(text, inputLanguageCode, outputLanguageCode) {
 	translate
 	  .detect(text)
 	  .then(results => {
-		let detections = results[0];
-		detections = Array.isArray(detections) ? detections : [detections];
-		infered = inferDetectionResult(detections);
-		inferedCountry = infered[0];
-		inferedInput = infered[1];
-		var actual = inferedCountry.split('-')[0].trim();
-		var expect = inputC.split('-')[0].trim();
-		var match = actual === expect;
-		console.log(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
-		if (match) {
-			console.log('going to translate');
-			translateAsync(inferedInput, outputC);
-		}		
+			let detections = results[0];
+			detections = Array.isArray(detections) ? detections : [detections];
+			let infered = inferDetectionResult(detections); // [ 'en', 'zha-US' ]
+			let inferedLanguageCountryCode = infered[0];
+			let inferedInputText = infered[1];
+			var actual = inferedLanguageCountryCode.split('-')[0].trim();
+			var expect = inputLanguageCode.split('-')[0].trim();
+			var match = actual === expect;
+			console.log(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
+			if (match) {
+				console.log('going to translate');
+				translateAsync(inferedInputText, outputLanguageCode);
+			}		
 	  })
 	  .catch(err => {
-		console.error('ERROR:', err);
+			console.error('ERROR:', err);
 	  });	
 }
 

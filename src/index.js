@@ -23,8 +23,10 @@ app.get('/translate', function(req, res){
 	
 	const name1 = input + '->' + output;
 	const child1 = spawn('node', 
-		['./src/worker.js', '4000', input, output, name1]);
-	child1.stdout.pipe(process.stdout);
+    [__dirname + '/worker.js', '4001', input, output, name1]);
+  child1.stderr.pipe(process.stdout);
+  child1.stdout.pipe(process.stdout);
+  
 	child1.on('exit', function (code, signal) {
 		console.log('child 1 process exited with ' +
 						`code ${code} and signal ${signal}`);
@@ -32,10 +34,10 @@ app.get('/translate', function(req, res){
 	
 	const name2 = output + '->' + input;
 	const child2 = spawn('node', 
-		['./src/worker.js', '5000', output, input, name2]);
+		[__dirname + '/worker.js', '5000', output, input, name2]);
 	child2.stdout.pipe(process.stdout);
 	child2.on('exit', function (code, signal) {
-		console.log('child 1 process exited with ' +
+		console.log('child 2 process exited with ' +
 						`code ${code} and signal ${signal}`);
 	});
 });
