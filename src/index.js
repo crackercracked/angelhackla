@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
-app.get('/', (req, res) => {
+/*app.get('/', (req, res) => {
   res.send("Hello world")
-});
+});*/
 
 app.use(express.static(__dirname + '/' + '../public'));
 app.use(bodyParser.json());
