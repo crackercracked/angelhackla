@@ -10,44 +10,47 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 
-// Imports the Google Cloud client library
 const record = require('node-record-lpcm16');
 const speech = require('@google-cloud/speech');
-// Creates a client
+const Translate = require('@google-cloud/translate');
+
 const client = new speech.SpeechClient();
+const translate = new Translate();
 
 const encoding = 'LINEAR16';
 const sampleRateHertz = 16000;
-const languageCode = 'en-US';
 
-// audio recognize
+const countryLanguageCode = {
+	'US': 'en-US',
+	'CN': 'zh-Hans',
+}
+const interimResult = true;
+
+const inputCountry = countryLanguageCode['US'];
+const outputCountry = countryLanguageCode['CN'];
 const request = {
   config: {
     encoding: encoding,
     sampleRateHertz: sampleRateHertz,
-    languageCode: languageCode,
+    languageCode: inputCountry,
   },
-  interimResults: false, // If you want interim results, set this to true
+  interimResults: interimResult,
 };
 
-// Create a recognize stream
+// Stream the audio to the Google Cloud Speech API
 const recognizeStream = client
   .streamingRecognize(request)
   .on('error', console.error)
-  .on('data', data =>
-    process.stdout.write(
-      data.results[0] && data.results[0].alternatives[0]
-        ? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
-        : `\n\nReached transcription time limit, press Ctrl+C\n`
-    )
-  );
+  .on('data', function(data){
+	var recordedText = data.results[0].alternatives[0].transcript;
+	console.log('recorded text: ' + recordedText);
+	translateAsync(recordedText, outputCountry);
+  });
 
-// Start recording and send the microphone input to the Speech API
 record
   .start({
     sampleRateHertz: sampleRateHertz,
     threshold: 0,
-    // Other options, see https://www.npmjs.com/package/node-record-lpcm16#options
     verbose: false,
     recordProgram: 'rec', // Try also "arecord" or "sox"
     silence: '10.0',
@@ -57,4 +60,22 @@ record
 
 console.log('Listening, press Ctrl+C to stop.');
 
+function translateAsync(text, target) {
+	translate
+	  .translate(text, target)
+	  .then(results => {
+		let translations = results[0];
+		translations = Array.isArray(translations)
+		  ? translations
+		  : [translations];
 
+		
+		console.log('Translations:');
+		translations.forEach((translation, i) => {
+		  console.log(`${text[i]} => (${target}) ${translation}`);
+		});
+	  })
+	  .catch(err => {
+		console.error('ERROR:', err);
+	  });
+}
