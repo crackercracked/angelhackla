@@ -24,7 +24,7 @@ const encoding = 'LINEAR16';
 const sampleRateHertz = 16000;
 
 const countryLanguageCode = {
-	'US': 'en-US',
+	'US': 'en-UK',
 	'CN': 'zh-Hans',
 }
 const interimResult = true;
@@ -53,8 +53,14 @@ function translateAudio(input, output) {
 	  .on('error', console.error)
 	  .on('data', function(data){
 		var recordedText = data.results[0].alternatives[0].transcript;
-		console.log(processName + ' recorded text: ' + recordedText);
-		translateAsync(recordedText, outputCountry);
+		var confidence = data.results[0].alternatives[0].confidence;
+		if (confidence < 0.9) {
+			return;
+		}
+		console.log(recordedText);
+		detectAndTranslateAsync(recordedText, 
+			inputCountry,
+			outputCountry);
 	  });
 
 	record
@@ -71,6 +77,49 @@ function translateAudio(input, output) {
 	console.log('Listening, press Ctrl+C to stop.');
 }
 
+function inferDetectionResult(detections) {
+ 	var largestConf = 0;
+	var inferedResult = null;
+	var interedInput = null;
+	detections = Array.isArray(detections) ? detections : [detections];
+	detections.forEach(detection => {
+		confidence = detection.confidence;
+		input = detection.input;
+		language = detection.language;
+		if (confidence > largestConf) {
+			largestConf = confidence;
+			inferedResult = language;
+			inferedInput = input;
+		}
+    });
+	console.log(processName + 
+		' Detected conf: ' + largestConf + 
+		', input ' + inferedInput + 
+		', lang=' + inferedResult);
+	return [inferedResult, inferedInput];
+}
+
+function detectAndTranslateAsync(text, inputC, outputC) {
+	translate
+	  .detect(text)
+	  .then(results => {
+		let detections = results[0];
+		detections = Array.isArray(detections) ? detections : [detections];
+		infered = inferDetectionResult(detections);
+		inferedCountry = infered[0];
+		inferedInput = infered[1];
+		if (inferedCountry.split('-')[0] 
+				!== inputC.split('-')[0]) {
+			// input audio is not of input country
+			return;
+		}		
+		
+		translateAsync(inferedInput, outputC);
+	  })
+	  .catch(err => {
+		console.error('ERROR:', err);
+	  });	
+}
 
 function translateAsync(text, target) {
 	translate
