@@ -24,7 +24,7 @@ const encoding = 'LINEAR16';
 const sampleRateHertz = 16000;
 
 const countryLanguageCode = {
-	'US': 'en-UK',
+	'US': 'en',
 	'CN': 'zh-Hans',
 }
 const interimResult = true;
@@ -57,7 +57,6 @@ function translateAudio(input, output) {
 		if (confidence < 0.9) {
 			return;
 		}
-		console.log(recordedText);
 		detectAndTranslateAsync(recordedText, 
 			inputCountry,
 			outputCountry);
@@ -108,13 +107,14 @@ function detectAndTranslateAsync(text, inputC, outputC) {
 		infered = inferDetectionResult(detections);
 		inferedCountry = infered[0];
 		inferedInput = infered[1];
-		if (inferedCountry.split('-')[0] 
-				!== inputC.split('-')[0]) {
-			// input audio is not of input country
-			return;
+		var actual = inferedCountry.split('-')[0].trim();
+		var expect = inputC.split('-')[0].trim();
+		var match = actual === expect;
+		console.log(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
+		if (match) {
+			console.log('going to translate');
+			translateAsync(inferedInput, outputC);
 		}		
-		
-		translateAsync(inferedInput, outputC);
 	  })
 	  .catch(err => {
 		console.error('ERROR:', err);
@@ -130,7 +130,6 @@ function translateAsync(text, target) {
 		  ? translations
 		  : [translations];
 
-		
 		console.log(processName + ' Translations:');
 		translations.forEach((translation, i) => {
 		  console.log(`${text[i]} => (${target}) ${translation}`);
