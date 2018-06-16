@@ -11,6 +11,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 
+app.get('/main', function(req, res) {
+	
+});
+
 
 app.get('/translate', function(req, res){
 	const input = req.query.input;
