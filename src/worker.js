@@ -82,9 +82,9 @@ function inferDetectionResult(detections) {
 	var interedInput = null;
 	detections = Array.isArray(detections) ? detections : [detections];
 	detections.forEach(detection => {
-		confidence = detection.confidence;
-		input = detection.input;
-		language = detection.language;
+		var confidence = detection.confidence;
+		var input = detection.input;
+		var language = detection.language;
 		if (confidence > largestConf) {
 			largestConf = confidence;
 			inferedResult = language;
