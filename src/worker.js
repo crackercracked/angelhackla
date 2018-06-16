@@ -7,7 +7,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const port = 3000; //process.argv[0]
+var arg = require('minimist')(process.argv.slice(2))['_'];
+console.log(arg)
+
+const port = arg[0]
 app.listen(port, () => console.log('Server running on port ' + port));
 
 const record = require('node-record-lpcm16');
@@ -21,14 +24,16 @@ const encoding = 'LINEAR16';
 const sampleRateHertz = 16000;
 
 const countryLanguageCode = {
-	'US': 'en-US',
+	'US': 'en',
 	'CN': 'zh-Hans',
 }
 const interimResult = true;
 
+const inputCountry = arg[1];
+const outputCountry = arg[2];
+translateAudio(inputCountry, outputCountry);
 
-translateAudio('US', 'CN');
-
+const processName = arg[3];
 
 function translateAudio(input, output) {
 	const inputCountry = countryLanguageCode[input];
@@ -48,8 +53,13 @@ function translateAudio(input, output) {
 	  .on('error', console.error)
 	  .on('data', function(data){
 		var recordedText = data.results[0].alternatives[0].transcript;
-		console.log('recorded text: ' + recordedText);
-		translateAsync(recordedText, outputCountry);
+		var confidence = data.results[0].alternatives[0].confidence;
+		if (confidence < 0.9) {
+			return;
+		}
+		detectAndTranslateAsync(recordedText, 
+			inputCountry,
+			outputCountry);
 	  });
 
 	record
@@ -66,6 +76,50 @@ function translateAudio(input, output) {
 	console.log('Listening, press Ctrl+C to stop.');
 }
 
+function inferDetectionResult(detections) {
+ 	var largestConf = 0;
+	var inferedResult = null;
+	var interedInput = null;
+	detections = Array.isArray(detections) ? detections : [detections];
+	detections.forEach(detection => {
+		confidence = detection.confidence;
+		input = detection.input;
+		language = detection.language;
+		if (confidence > largestConf) {
+			largestConf = confidence;
+			inferedResult = language;
+			inferedInput = input;
+		}
+    });
+	console.log(processName + 
+		' Detected conf: ' + largestConf + 
+		', input ' + inferedInput + 
+		', lang=' + inferedResult);
+	return [inferedResult, inferedInput];
+}
+
+function detectAndTranslateAsync(text, inputC, outputC) {
+	translate
+	  .detect(text)
+	  .then(results => {
+		let detections = results[0];
+		detections = Array.isArray(detections) ? detections : [detections];
+		infered = inferDetectionResult(detections);
+		inferedCountry = infered[0];
+		inferedInput = infered[1];
+		var actual = inferedCountry.split('-')[0].trim();
+		var expect = inputC.split('-')[0].trim();
+		var match = actual === expect;
+		console.log(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
+		if (match) {
+			console.log('going to translate');
+			translateAsync(inferedInput, outputC);
+		}		
+	  })
+	  .catch(err => {
+		console.error('ERROR:', err);
+	  });	
+}
 
 function translateAsync(text, target) {
 	translate
@@ -76,8 +130,7 @@ function translateAsync(text, target) {
 		  ? translations
 		  : [translations];
 
-		
-		console.log('Translations:');
+		console.log(processName + ' Translations:');
 		translations.forEach((translation, i) => {
 		  console.log(`${text[i]} => (${target}) ${translation}`);
 		});
