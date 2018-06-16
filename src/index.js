@@ -4,14 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
-app.use(express.static(__dirname + '/' + '../public'));
+//app.use(express.static(__dirname + '/' + '../public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 
-const record = require('node-record-lpcm16');
 // Imports the Google Cloud client library
+const record = require('node-record-lpcm16');
 const speech = require('@google-cloud/speech');
 // Creates a client
 const client = new speech.SpeechClient();
