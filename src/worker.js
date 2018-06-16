@@ -7,7 +7,8 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const port = 3000; //process.argv[0]
+var arg = require('minimist')(process.argv.slice(2));
+const port = arg['_'][0]
 app.listen(port, () => console.log('Server running on port ' + port));
 
 const record = require('node-record-lpcm16');
