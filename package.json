@@ -33,7 +33,7 @@
     "gulp-babel": "^7.0.1",
     "gulp-help-four": "^0.2.3",
     "gulp-sourcemaps": "^2.6.4",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
     "node-record-lpcm16": "^0.3.0"
   }
 }
