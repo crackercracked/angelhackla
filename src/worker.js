@@ -7,8 +7,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-var arg = require('minimist')(process.argv.slice(2));
-const port = arg['_'][0]
+var arg = require('minimist')(process.argv.slice(2))['_'];
+console.log(arg)
+
+const port = arg[0]
 app.listen(port, () => console.log('Server running on port ' + port));
 
 const record = require('node-record-lpcm16');
@@ -27,9 +29,11 @@ const countryLanguageCode = {
 }
 const interimResult = true;
 
+const inputCountry = arg[1];
+const outputCountry = arg[2];
+translateAudio(inputCountry, outputCountry);
 
-translateAudio('US', 'CN');
-
+const processName = arg[3];
 
 function translateAudio(input, output) {
 	const inputCountry = countryLanguageCode[input];
@@ -49,7 +53,7 @@ function translateAudio(input, output) {
 	  .on('error', console.error)
 	  .on('data', function(data){
 		var recordedText = data.results[0].alternatives[0].transcript;
-		console.log('recorded text: ' + recordedText);
+		console.log(processName + ' recorded text: ' + recordedText);
 		translateAsync(recordedText, outputCountry);
 	  });
 
@@ -78,7 +82,7 @@ function translateAsync(text, target) {
 		  : [translations];
 
 		
-		console.log('Translations:');
+		console.log(processName + ' Translations:');
 		translations.forEach((translation, i) => {
 		  console.log(`${text[i]} => (${target}) ${translation}`);
 		});
