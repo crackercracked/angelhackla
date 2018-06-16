@@ -10,72 +10,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 
-const record = require('node-record-lpcm16');
-const speech = require('@google-cloud/speech');
-const Translate = require('@google-cloud/translate');
+app.get('/translate', function(req, res){
+	const input = req.query.input;
+	const output = req.query.output;
+	var spawn = require('child_process').spawn;
+	spawn('node', ['src/worker.js', '4000']);
+});
 
-const client = new speech.SpeechClient();
-const translate = new Translate();
-
-const encoding = 'LINEAR16';
-const sampleRateHertz = 16000;
-
-const countryLanguageCode = {
-	'US': 'en-US',
-	'CN': 'zh-Hans',
-}
-const interimResult = true;
-
-const inputCountry = countryLanguageCode['US'];
-const outputCountry = countryLanguageCode['CN'];
-const request = {
-  config: {
-    encoding: encoding,
-    sampleRateHertz: sampleRateHertz,
-    languageCode: inputCountry,
-  },
-  interimResults: interimResult,
-};
-
-// Stream the audio to the Google Cloud Speech API
-const recognizeStream = client
-  .streamingRecognize(request)
-  .on('error', console.error)
-  .on('data', function(data){
-	var recordedText = data.results[0].alternatives[0].transcript;
-	console.log('recorded text: ' + recordedText);
-	translateAsync(recordedText, outputCountry);
-  });
-
-record
-  .start({
-    sampleRateHertz: sampleRateHertz,
-    threshold: 0,
-    verbose: false,
-    recordProgram: 'rec', // Try also "arecord" or "sox"
-    silence: '10.0',
-  })
-  .on('error', console.error)
-  .pipe(recognizeStream);
-
-console.log('Listening, press Ctrl+C to stop.');
-
-function translateAsync(text, target) {
-	translate
-	  .translate(text, target)
-	  .then(results => {
-		let translations = results[0];
-		translations = Array.isArray(translations)
-		  ? translations
-		  : [translations];
-
-		
-		console.log('Translations:');
-		translations.forEach((translation, i) => {
-		  console.log(`${text[i]} => (${target}) ${translation}`);
-		});
-	  })
-	  .catch(err => {
-		console.error('ERROR:', err);
-	  });
-}
