@@ -9,7 +9,6 @@
 </head>
 
 <body>
-  <app-root></app-root>
   <div class="container">
     <div id="div_device" class="panel panel-default row">
       
@@ -36,24 +35,13 @@
     </div>
   </div>
 
-      <!--style>
-      .video__box{width:910px; margin:0 auto; overflow:hidden;}
-      .video__main{ width:810px; height:607px;float:left }
-      .video__list{ width:200px; height:607px; float:left;}
-      .video__item{ width:200px; height:174px; hei background:url(/img/icon_live.png) center center no-repeat; }
-      </style>
-      <div class="video__main">
-      </div>
-      <div class="video__list">
-          <div class="video__item"></div>
-          <div id="video" class="video__item">
-              <div id="agora_local"></div>
-          </div>
-      </div-->
-
   <div id="video" style="margin:0 auto;">
-      <div id="agora_local" style="float:right;width:210px;height:147px;display:inline-block;"></div>
+      <div id="agora_local" class="local_screen"></div>
   </div>
+
+  <div class="local_subtitles"></div>
+  <!-- <div class="remote_subtitles"></div> -->
+  
 
   <script language="javascript">
 
@@ -94,7 +82,14 @@
         if (document.getElementById("video").checked) {
           camera = videoSource.value;
           microphone = audioSource.value;
-          localStream = AgoraRTC.createStream({streamID: uid, audio: true, cameraId: camera, microphoneId: microphone, video: document.getElementById("video").checked, screen: false});
+          localStream = AgoraRTC.createStream(
+            {streamID: uid, audio: true, 
+              cameraId: camera, microphoneId: 
+              microphone, 
+              video: document.getElementById("video").checked, 
+              screen: false
+            }
+          );
           //localStream = AgoraRTC.createStream({streamID: uid, audio: false, cameraId: camera, microphoneId: microphone, video: false, screen: true, extensionId: 'minllpmhdgpndnkomcoccfekfegnlikg'});
           if (document.getElementById("video").checked) {
             localStream.setVideoProfile('720p_3');
@@ -159,7 +154,10 @@
       var stream = evt.stream;
       console.log("Subscribe remote stream successfully: " + stream.getId());
       if ($('div#video #agora_remote'+stream.getId()).length === 0) {
-        $('div#video').append('<div id="agora_remote'+stream.getId()+'" style="float:left; width:810px;height:607px;display:inline-block;"></div>');
+        $('div#video').append('<div id="agora_remote'
+          + stream.getId() + '" class="remote_screen">'
+          + '</div>'
+        );
       }
       stream.play('agora_remote' + stream.getId());
     });
@@ -179,6 +177,20 @@
         console.log(evt.uid + " leaved from this channel");
       }
     });
+
+
+    $.ajax({
+      type: 'get',
+      url: '/translate',
+      data: { 
+        input: 'US',
+        output: 'TA',
+      },
+      success: function (data) {
+        $('div.local_subtitles').text(data);
+        console.log(data);
+      }
+    })
   }
 
   function leave() {

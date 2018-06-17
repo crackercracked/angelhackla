@@ -8,10 +8,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var arg = require('minimist')(process.argv.slice(2))['_'];
-console.log(arg)
+console.error(arg)
 
 const port = arg[0]
-app.listen(port, () => console.log('Server running on port ' + port));
+app.listen(port, () => console.error('Server running on port ' + port));
 
 const record = require('node-record-lpcm16');
 const speech = require('@google-cloud/speech');
@@ -76,7 +76,7 @@ function translateAudio(input, output) {
 	  .on('error', console.error)
 	  .pipe(recognizeStream);
 
-	console.log('Listening, press Ctrl+C to stop.');
+	console.error('Listening, press Ctrl+C to stop.');
 }
 
 function inferDetectionResult(detections) {
@@ -94,7 +94,7 @@ function inferDetectionResult(detections) {
 			inferedInput = input;
 		}
 	});
-	console.log(processName + 
+	console.error(processName + 
 		' Detected conf: ' + largestConf + 
 		', input ' + inferedInput + 
 		', lang=' + inferedResult);
@@ -113,9 +113,9 @@ function detectAndTranslateAsync(text, inputLanguageCode, outputLanguageCode) {
 			var actual = inferedLanguageCountryCode.split('-')[0].trim();
 			var expect = inputLanguageCode.split('-')[0].trim();
 			var match = actual === expect;
-			console.log(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
+			console.error(processName + ' compare infer ' + actual + ', and expect ' + expect + ', match ' + match);
 			if (match) {
-				console.log('going to translate');
+				console.error('going to translate');
 				translateAsync(inferedInputText, outputLanguageCode);
 			}		
 	  })
@@ -133,12 +133,13 @@ function translateAsync(text, target) {
 		  ? translations
 		  : [translations];
 
-		console.log(processName + ' Translations:');
-		translations.forEach((translation, i) => {
-		  console.log(`${text[i]} => (${target}) ${translation}`);
-		});
+		console.error(processName + ' Translations:');
+			translations.forEach((translation, i) => {
+				console.error(`${text[i]} => (${target}) ${translation}`);
+				console.log(translation);
+			});
 	  })
 	  .catch(err => {
-		console.error('ERROR:', err);
+			console.error('ERROR:', err);
 	  });
 }

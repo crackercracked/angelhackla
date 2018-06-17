@@ -1,3 +1,31 @@
 .select {
     width: 20%;
 }
+
+div.local_screen {
+    float:left;
+    width:500px;
+    height:500px;
+    display:inline-block;
+}
+
+div.remote_screen {
+    float:left; 
+    width:500px;
+    height:500px;
+    display:inline-block;
+}
+
+div.local_subtitles {
+    display: block;
+    color: #FF0000;
+    width: 500px;
+    height: 100px;
+}
+
+div.remote_subtitles {
+    display: block;
+    color: #00FF00;
+    width: 500px;
+    height: 100px;
+}
